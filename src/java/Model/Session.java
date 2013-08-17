@@ -6,7 +6,7 @@ package Model;
 
 import com.github.jmkgreen.morphia.annotations.Id;
 import org.bson.types.ObjectId;
-import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
 
 /*
  Copyright 2008-2013 Clement Levallois
@@ -47,68 +47,42 @@ import twitter4j.auth.AccessToken;
  Contributor(s): Clement Levallois
 
  */
-public class AccessTokenPlus extends AccessToken {
+public class Session {
 
     @Id
     private ObjectId id;
-    private long timeGetFollowers;
-    private long timeGetFriends;
-    private long timeGetUsersShow;
-    private boolean isAvailable;
-    private String screen_name;
+    String idGephi;
+    String user;
+    long time;
 
-    public AccessTokenPlus(String token, String tokenSecret) {
-        super(token, tokenSecret);
+    public Session() {
     }
 
-//    public AccessTokenPlus(String token, String tokenSecret) {
-//        this.token = token;
-//        this.tokenSecret = tokenSecret;
-//    }
-//
-    public AccessTokenPlus() {
 
-        super("", "");
+    public String getIdGephi() {
+        return idGephi;
     }
 
-    public long getTimeGetFollowers() {
-        return timeGetFollowers;
+    public void setIdGephi(String idGephi) {
+        this.idGephi = idGephi;
     }
 
-    public void setTimeGetFollowers(long timeGetFollowers) {
-        this.timeGetFollowers = timeGetFollowers;
+    public String getUser() {
+        return user;
     }
 
-    public long getTimeGetFriends() {
-        return timeGetFriends;
+    public void setUser(String user) {
+        this.user = user;
     }
 
-    public void setTimeGetFriends(long timeGetFriends) {
-        this.timeGetFriends = timeGetFriends;
+    public long getTime() {
+        return time;
     }
 
-    public long getTimeGetUsersShow() {
-        return timeGetUsersShow;
+    public void setTime(long time) {
+        this.time = time;
     }
-
-    public void setTimeGetUsersShow(long timeGetUsersShow) {
-        this.timeGetUsersShow = timeGetUsersShow;
-    }
-
-    public boolean isIsAvailable() {
-        return isAvailable;
-    }
-
-    public void setIsAvailable(boolean isAvailable) {
-        this.isAvailable = isAvailable;
-    }
-
-    public String getScreen_name() {
-        return screen_name;
-    }
-
-    public void setScreen_name(String screen_name) {
-        this.screen_name = screen_name;
-    }
+    
+    
 
 }

@@ -8,8 +8,8 @@
     </h:head>
     <h:body>
         <div class="text">
-            <h:outputText rendered ="#{generalControllerBean.messageRendered}" value="Twitter authentification successful. Close this page and go back to Gephi."></h:outputText>
-            <h:outputText rendered ="#{!generalControllerBean.messageRendered}" value="Twitter authentification failed. Close this page and go back to Gephi."></h:outputText>
+            <h:outputText rendered ="#{authentificationResult.messageRendered}" value="Twitter authentification successful. Close this page and go back to Gephi."></h:outputText>
+            <h:outputText rendered ="#{!authentificationResult.messageRendered}" value="Twitter authentification failed. Close this page and go back to Gephi."></h:outputText>
         </div>
     </h:body>
 </html>

@@ -1,12 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Model;
+package Persistence;
 
-import com.github.jmkgreen.morphia.annotations.Id;
-import org.bson.types.ObjectId;
-import twitter4j.auth.AccessToken;
+import Model.AccessTokenPlus;
+import Model.Record;
+import com.github.jmkgreen.morphia.Datastore;
+import com.github.jmkgreen.morphia.Morphia;
+import com.mongodb.MongoClient;
+import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /*
  Copyright 2008-2013 Clement Levallois
@@ -47,68 +53,62 @@ import twitter4j.auth.AccessToken;
  Contributor(s): Clement Levallois
 
  */
-public class AccessTokenPlus extends AccessToken {
+public class MongoMorphia {
 
-    @Id
-    private ObjectId id;
-    private long timeGetFollowers;
-    private long timeGetFriends;
-    private long timeGetUsersShow;
-    private boolean isAvailable;
-    private String screen_name;
+    MongoClient mongoClient;
+    Morphia morphia;
+    Datastore dsOAuth;
+    Datastore dsAccessToken;
+    Datastore dsAccessTokenBusy;
+    Datastore dsJobs;
+    Datastore dsSessions;
 
-    public AccessTokenPlus(String token, String tokenSecret) {
-        super(token, tokenSecret);
+    public MongoMorphia() {
     }
 
-//    public AccessTokenPlus(String token, String tokenSecret) {
-//        this.token = token;
-//        this.tokenSecret = tokenSecret;
-//    }
-//
-    public AccessTokenPlus() {
+    public void initialize() {
+        try {
+            mongoClient = new MongoClient("199.59.247.173", 27017);
+            morphia = new Morphia();
+            dsOAuth = morphia.createDatastore(mongoClient, "oAuth");
+            dsAccessToken = morphia.createDatastore(mongoClient, "AccessToken");
+            dsAccessTokenBusy = morphia.createDatastore(mongoClient, "AccessTokenBusy");
+            dsJobs = morphia.createDatastore(mongoClient, "Job");
+            dsSessions = morphia.createDatastore(mongoClient, "Session");
 
-        super("", "");
+            morphia.map(Record.class);
+            morphia.map(AccessTokenPlus.class);
+
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(MongoMorphia.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
-    public long getTimeGetFollowers() {
-        return timeGetFollowers;
+    public Datastore getDsOAuth() {
+        return dsOAuth;
     }
 
-    public void setTimeGetFollowers(long timeGetFollowers) {
-        this.timeGetFollowers = timeGetFollowers;
+    public Datastore getDsAccessToken() {
+        return dsAccessToken;
     }
 
-    public long getTimeGetFriends() {
-        return timeGetFriends;
+    public Datastore getDsAccessTokenBusy() {
+        return dsAccessTokenBusy;
     }
 
-    public void setTimeGetFriends(long timeGetFriends) {
-        this.timeGetFriends = timeGetFriends;
+    public Datastore getDsJobs() {
+        return dsJobs;
     }
 
-    public long getTimeGetUsersShow() {
-        return timeGetUsersShow;
+    public Datastore getDsSessions() {
+        return dsSessions;
     }
 
-    public void setTimeGetUsersShow(long timeGetUsersShow) {
-        this.timeGetUsersShow = timeGetUsersShow;
+    public void setDsSessions(Datastore dsSessions) {
+        this.dsSessions = dsSessions;
     }
-
-    public boolean isIsAvailable() {
-        return isAvailable;
-    }
-
-    public void setIsAvailable(boolean isAvailable) {
-        this.isAvailable = isAvailable;
-    }
-
-    public String getScreen_name() {
-        return screen_name;
-    }
-
-    public void setScreen_name(String screen_name) {
-        this.screen_name = screen_name;
-    }
+    
+    
 
 }

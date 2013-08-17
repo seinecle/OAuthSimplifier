@@ -6,14 +6,15 @@ package Control;
 
 import Model.AccessTokenPlus;
 import Model.Record;
-import Private.APIkeys;
+import Model.Session;
+import Persistence.MongoMorphia;
 import com.github.jmkgreen.morphia.Datastore;
 import com.github.jmkgreen.morphia.Morphia;
 import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
+import java.io.IOException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,16 +23,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ManagedProperty;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
 import twitter4j.auth.AccessToken;
 import twitter4j.auth.RequestToken;
-import twitter4j.conf.Configuration;
-import twitter4j.conf.ConfigurationBuilder;
 
 /*
  Copyright 2008-2013 Clement Levallois
@@ -74,52 +73,44 @@ import twitter4j.conf.ConfigurationBuilder;
  */
 @ManagedBean
 @ViewScoped
-public class GeneralControllerBean {
+public class AuthentificationResult  implements Serializable{
 
     Mongo m;
     Morphia morphia;
     String dummy;
     boolean messageRendered = false;
     String uri = "";
-    Twitter twitter;
+    Twitter twitter = null;
     RequestToken requestToken;
     AccessToken accessToken;
     static boolean debug = false;
-    Record r = new Record();
 
-    public GeneralControllerBean() {
+    @ManagedProperty(value = "#{authentificationStart}")
+    private AuthentificationStart authentificationStart;
+
+    public void setAuthentificationStart(AuthentificationStart authentificationStart) {
+        this.authentificationStart = authentificationStart;
     }
 
-    public static void main(String args[]) {
+    public AuthentificationResult() {
+    }
+
+    public static void main(String args[]) throws IOException {
         debug = true;
         try {
-            new GeneralControllerBean().init();
+            new AuthentificationResult().init();
         } catch (TwitterException ex) {
-            Logger.getLogger(GeneralControllerBean.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(AuthentificationResult.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
     @PostConstruct
-    public String init() throws TwitterException {
-        try {
-            MongoClient mongoClient = new MongoClient("localhost", 27017);
-            morphia = new Morphia();
-            morphia.map(Record.class);
-            morphia.map(AccessTokenPlus.class);
+    public void init() throws TwitterException, IOException {
 
-            ConfigurationBuilder builder = new ConfigurationBuilder();
-            builder.setOAuthConsumerKey(APIkeys.getTwitterAPIKey());
-            builder.setOAuthConsumerSecret(APIkeys.getTwitterAPISecret());
-            Configuration configuration = builder.build();
-            TwitterFactory factory = new TwitterFactory(configuration);
-            twitter = factory.getInstance();
-//            twitter = TwitterFactory.getSingleton();
-//            twitter.setOAuthConsumer(APIkeys.getTwitterAPIKey(), APIkeys.getTwitterAPISecret());
+        Map<String, List<String>> urlParams = new HashMap();
 
-            Datastore dsOAuth = morphia.createDatastore(mongoClient, "oAuth");
-
-            Map<String, List<String>> urlParams;
-            if (!debug) {
+        if (!debug) {
+            try {
                 FacesContext ctx = FacesContext.getCurrentInstance();
                 HttpServletRequest servletRequest = (HttpServletRequest) ctx.getExternalContext().getRequest();
                 uri = servletRequest.getRequestURI();
@@ -127,59 +118,84 @@ public class GeneralControllerBean {
                     uri = uri.concat("?").concat(servletRequest.getQueryString());
                 }
                 urlParams = getUrlParameters(uri);
-            } else {
-                urlParams = new HashMap();
-                List<String> values = new ArrayList();
-                values.add("this is an id");
-                values.add("token");
-                values.add("token verifier");
-                urlParams.put("id", values);
-                urlParams.put("oauth_token", values);
-                urlParams.put("oauth_verifier", values);
+            } catch (UnsupportedEncodingException ex) {
+                Logger.getLogger(AuthentificationResult.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-            for (String key : urlParams.keySet()) {
-                if ("id".equals(key)) {
-                    r.setId(urlParams.get(key).get(0));
-                }
-                if ("oauth_token".equals(key)) {
-                    if (debug) {
-                        r.setoAuth_token(urlParams.get(key).get(1));
-                    } else {
-                        r.setoAuth_token(urlParams.get(key).get(0));
-                    }
-                }
-                if ("oauth_verifier".equals(key)) {
-                    if (debug) {
-                        r.setoAuth_verifier(urlParams.get(key).get(2));
-                    } else {
-                        r.setoAuth_verifier(urlParams.get(key).get(0));
-                    }
-                }
-            }
-
-            if (r.getIdGephi() != null & r.getoAuth_token() != null & r.getoAuth_verifier() != null) {
-                //the access token is saved temporarily for the purpose of first identification
-                dsOAuth.save(r);
-
-                //the access token is saved permanently
-//                requestToken = twitter.getOAuthRequestToken(r.getoAuth_token());
-//                accessToken = twitter.getOAuthAccessToken(requestToken,r.getoAuth_verifier());
-                messageRendered = true;
-
-            }
-
-        } catch (UnknownHostException | UnsupportedEncodingException ex) {
-            Logger.getLogger(GeneralControllerBean.class
-                    .getName()).log(Level.SEVERE, null, ex);
+        } else {
+            urlParams = new HashMap();
+            List<String> values = new ArrayList();
+            values.add("this is an id");
+            values.add("token");
+            values.add("token verifier");
+            urlParams.put("id", values);
+            urlParams.put("oauth_token", values);
+            urlParams.put("oauth_verifier", values);
         }
+
+        String id = "";
+        String oAuth_token = "";
+        String oAuth_verifier = "";
+
+        for (String key : urlParams.keySet()) {
+            if ("id".equals(key)) {
+                id = urlParams.get(key).get(0);
+            }
+            if ("oauth_token".equals(key)) {
+                if (debug) {
+                    oAuth_token = urlParams.get(key).get(1);
+                } else {
+                    oAuth_token = urlParams.get(key).get(0);
+                }
+            }
+            if ("oauth_verifier".equals(key)) {
+                if (debug) {
+                    oAuth_verifier = urlParams.get(key).get(2);
+                } else {
+                    oAuth_verifier = urlParams.get(key).get(0);
+                }
+            }
+        }
+
+        Record recordCurrentUser = null;
+
+        if (!id.isEmpty() & !oAuth_token.isEmpty() & !oAuth_verifier.isEmpty()) {
+            recordCurrentUser = authentificationStart.r;
+            twitter = authentificationStart.twitter;
+        }
+
+        MongoMorphia mm = new MongoMorphia();
+        mm.initialize();
+
+        Datastore dsAccessToken = mm.getDsAccessToken();
+        Datastore dsSession = mm.getDsSessions();
+
+        requestToken = recordCurrentUser.getRequestToken();
+        accessToken = twitter.getOAuthAccessToken(requestToken, oAuth_verifier);
+        String currentUser = accessToken.getScreenName();
+        System.out.println("current user: " + currentUser);
+
+        Session session = new Session();
+        session.setIdGephi(id);
+        session.setUser(currentUser);
+        session.setTime(System.currentTimeMillis());
+
+        dsSession.save(session);
+
+        if (dsAccessToken.find(AccessTokenPlus.class).field("token").equal((accessToken.getToken())).asList().isEmpty()) {
+            AccessTokenPlus accessTokenPlus = new AccessTokenPlus(accessToken.getToken(), accessToken.getTokenSecret());
+            accessTokenPlus.setIsAvailable(true);
+            accessTokenPlus.setScreen_name(currentUser);
+            dsAccessToken.save(accessTokenPlus);
+        }
+
+
+        messageRendered = true;
 
         FacesContext.getCurrentInstance()
                 .getPartialViewContext().getRenderIds().add("messageOK");
         FacesContext.getCurrentInstance()
                 .getPartialViewContext().getRenderIds().add("messageFAIL");
 
-        return null;
     }
 
     public String getDummy() {
@@ -214,7 +230,7 @@ public class GeneralControllerBean {
         return params;
     }
 
-    public boolean isMessageRendered() {
+    public boolean isMessageRendered() throws TwitterException, IOException {
         return messageRendered;
     }
 

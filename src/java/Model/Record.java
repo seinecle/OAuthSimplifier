@@ -6,6 +6,7 @@ package Model;
 
 import com.github.jmkgreen.morphia.annotations.Id;
 import org.bson.types.ObjectId;
+import twitter4j.auth.RequestToken;
 
 /*
  Copyright 2008-2013 Clement Levallois
@@ -53,6 +54,10 @@ public class Record {
     String idGephi;
     String oAuth_token;
     String oAuth_verifier;
+    RequestToken requestToken;
+
+    public Record() {
+    }
 
     public String getIdGephi() {
         return idGephi;
@@ -77,4 +82,14 @@ public class Record {
     public void setoAuth_verifier(String oAuth_verifier) {
         this.oAuth_verifier = oAuth_verifier;
     }
+
+    public RequestToken getRequestToken() {
+        return requestToken;
+    }
+
+    public void setRequestToken(RequestToken requestToken) {
+        this.requestToken = requestToken;
+    }
+    
+    
 }

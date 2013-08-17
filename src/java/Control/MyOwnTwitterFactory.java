@@ -1,12 +1,14 @@
 /*
- * To change this template, choose Tools | Templates
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Model;
+package Control;
 
-import com.github.jmkgreen.morphia.annotations.Id;
-import org.bson.types.ObjectId;
-import twitter4j.auth.AccessToken;
+import Private.APIkeys;
+import twitter4j.Twitter;
+import twitter4j.conf.Configuration;
+import twitter4j.conf.ConfigurationBuilder;
 
 /*
  Copyright 2008-2013 Clement Levallois
@@ -47,68 +49,19 @@ import twitter4j.auth.AccessToken;
  Contributor(s): Clement Levallois
 
  */
-public class AccessTokenPlus extends AccessToken {
+public class MyOwnTwitterFactory {
 
-    @Id
-    private ObjectId id;
-    private long timeGetFollowers;
-    private long timeGetFriends;
-    private long timeGetUsersShow;
-    private boolean isAvailable;
-    private String screen_name;
+    public Twitter createOneTwitterInstance() {
+        Twitter twitter;
+        ConfigurationBuilder builder = new ConfigurationBuilder();
+        builder.setOAuthConsumerKey(APIkeys.getTwitterAPIKey());
+        builder.setOAuthConsumerSecret(APIkeys.getTwitterAPISecret());
+        Configuration configuration = builder.build();
+        twitter4j.TwitterFactory factory = new twitter4j.TwitterFactory(configuration);
+        twitter = factory.getInstance();
 
-    public AccessTokenPlus(String token, String tokenSecret) {
-        super(token, tokenSecret);
-    }
+        return twitter;
 
-//    public AccessTokenPlus(String token, String tokenSecret) {
-//        this.token = token;
-//        this.tokenSecret = tokenSecret;
-//    }
-//
-    public AccessTokenPlus() {
-
-        super("", "");
-    }
-
-    public long getTimeGetFollowers() {
-        return timeGetFollowers;
-    }
-
-    public void setTimeGetFollowers(long timeGetFollowers) {
-        this.timeGetFollowers = timeGetFollowers;
-    }
-
-    public long getTimeGetFriends() {
-        return timeGetFriends;
-    }
-
-    public void setTimeGetFriends(long timeGetFriends) {
-        this.timeGetFriends = timeGetFriends;
-    }
-
-    public long getTimeGetUsersShow() {
-        return timeGetUsersShow;
-    }
-
-    public void setTimeGetUsersShow(long timeGetUsersShow) {
-        this.timeGetUsersShow = timeGetUsersShow;
-    }
-
-    public boolean isIsAvailable() {
-        return isAvailable;
-    }
-
-    public void setIsAvailable(boolean isAvailable) {
-        this.isAvailable = isAvailable;
-    }
-
-    public String getScreen_name() {
-        return screen_name;
-    }
-
-    public void setScreen_name(String screen_name) {
-        this.screen_name = screen_name;
     }
 
 }
