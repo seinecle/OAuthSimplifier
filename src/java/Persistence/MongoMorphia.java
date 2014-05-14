@@ -5,12 +5,18 @@
  */
 package Persistence;
 
+import Control.Admin;
 import Model.AccessTokenPlus;
 import Model.Record;
+import Model.Session;
+import Model.User;
 import com.github.jmkgreen.morphia.Datastore;
 import com.github.jmkgreen.morphia.Morphia;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -62,22 +68,26 @@ public class MongoMorphia {
     Datastore dsAccessTokenBusy;
     Datastore dsJobs;
     Datastore dsSessions;
+    Datastore dsUsers;
 
     public MongoMorphia() {
     }
 
     public void initialize() {
         try {
-            mongoClient = new MongoClient("199.59.247.173", 27017);
+            MongoCredential credential = MongoCredential.createMongoCRCredential("admin", "admin", "$$PASdefumee1984".toCharArray());
+            ServerAddress server = new ServerAddress(Admin.ipMongo(), 27017);
+            mongoClient = new MongoClient(server, Arrays.asList(credential));
             morphia = new Morphia();
             dsOAuth = morphia.createDatastore(mongoClient, "oAuth");
             dsAccessToken = morphia.createDatastore(mongoClient, "AccessToken");
-            dsAccessTokenBusy = morphia.createDatastore(mongoClient, "AccessTokenBusy");
-            dsJobs = morphia.createDatastore(mongoClient, "Job");
             dsSessions = morphia.createDatastore(mongoClient, "Session");
+            dsUsers = morphia.createDatastore(mongoClient, "User");
 
             morphia.map(Record.class);
             morphia.map(AccessTokenPlus.class);
+            morphia.map(User.class);
+            morphia.map(Session.class);
 
         } catch (UnknownHostException ex) {
             Logger.getLogger(MongoMorphia.class.getName()).log(Level.SEVERE, null, ex);
@@ -105,10 +115,8 @@ public class MongoMorphia {
         return dsSessions;
     }
 
-    public void setDsSessions(Datastore dsSessions) {
-        this.dsSessions = dsSessions;
+    public Datastore getDsUsers() {
+        return dsUsers;
     }
-    
-    
 
 }

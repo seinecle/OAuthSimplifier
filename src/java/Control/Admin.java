@@ -5,11 +5,6 @@
  */
 package Control;
 
-import Private.APIkeys;
-import twitter4j.Twitter;
-import twitter4j.conf.Configuration;
-import twitter4j.conf.ConfigurationBuilder;
-
 /*
  Copyright 2008-2013 Clement Levallois
  Authors : Clement Levallois <clementlevallois@gmail.com>
@@ -49,20 +44,12 @@ import twitter4j.conf.ConfigurationBuilder;
  Contributor(s): Clement Levallois
 
  */
-public class MyOwnTwitterFactory {
+public class Admin {
 
-    public Twitter createOneTwitterInstance() {
-        Twitter twitter;
-        ConfigurationBuilder builder = new ConfigurationBuilder();
-        builder.setOAuthConsumerKey(APIkeys.getTwitterAPIKey());
-        builder.setOAuthConsumerSecret(APIkeys.getTwitterAPISecret());
-        builder.setUseSSL(true);
-        Configuration configuration = builder.build();
-        twitter4j.TwitterFactory factory = new twitter4j.TwitterFactory(configuration);
-        twitter = factory.getInstance();
+    static boolean isServerDispatchLocal = false;
 
-        return twitter;
-
+    public static String ipMongo() {
+        return "188.40.134.200";
     }
 
 }

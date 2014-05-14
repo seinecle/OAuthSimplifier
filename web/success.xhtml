@@ -9,6 +9,7 @@
     <h:body>
         <div class="text">
             <h:outputText rendered ="#{authentificationResult.messageRendered}" value="Twitter authentification successful. Close this page and go back to Gephi."></h:outputText>
+            <h:outputText rendered ="#{authentificationResult.serverErrorMessageRendered}" value="Cause of the problem: coming from Twitter, not the plugin."></h:outputText>
             <h:outputText rendered ="#{!authentificationResult.messageRendered}" value="Twitter authentification failed. Close this page and go back to Gephi."></h:outputText>
         </div>
     </h:body>

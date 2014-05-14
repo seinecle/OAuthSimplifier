@@ -3,12 +3,11 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Control;
 
-import Private.APIkeys;
-import twitter4j.Twitter;
-import twitter4j.conf.Configuration;
-import twitter4j.conf.ConfigurationBuilder;
+package Model;
+
+import com.github.jmkgreen.morphia.annotations.Id;
+import org.bson.types.ObjectId;
 
 /*
  Copyright 2008-2013 Clement Levallois
@@ -49,20 +48,87 @@ import twitter4j.conf.ConfigurationBuilder;
  Contributor(s): Clement Levallois
 
  */
-public class MyOwnTwitterFactory {
+public class User {
+    
+    @Id
+    private ObjectId id;
+    String name;
+    String twitterConsumerKey;
+    String twitterConsumerSecret;
+    String twitterAccessToken;
+    String twitterAccessTokenSecret;
+    String flickrKey;
+    String flickrSecret;
 
-    public Twitter createOneTwitterInstance() {
-        Twitter twitter;
-        ConfigurationBuilder builder = new ConfigurationBuilder();
-        builder.setOAuthConsumerKey(APIkeys.getTwitterAPIKey());
-        builder.setOAuthConsumerSecret(APIkeys.getTwitterAPISecret());
-        builder.setUseSSL(true);
-        Configuration configuration = builder.build();
-        twitter4j.TwitterFactory factory = new twitter4j.TwitterFactory(configuration);
-        twitter = factory.getInstance();
-
-        return twitter;
-
+    public User() {
     }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(ObjectId id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getTwitterConsumerKey() {
+        return twitterConsumerKey;
+    }
+
+    public void setTwitterConsumerKey(String twitterConsumerKey) {
+        this.twitterConsumerKey = twitterConsumerKey;
+    }
+
+    public String getTwitterConsumerSecret() {
+        return twitterConsumerSecret;
+    }
+
+    public void setTwitterConsumerSecret(String twitterConsumerSecret) {
+        this.twitterConsumerSecret = twitterConsumerSecret;
+    }
+
+    public String getTwitterAccessToken() {
+        return twitterAccessToken;
+    }
+
+    public void setTwitterAccessToken(String twitterAccessToken) {
+        this.twitterAccessToken = twitterAccessToken;
+    }
+
+    public String getTwitterAccessTokenSecret() {
+        return twitterAccessTokenSecret;
+    }
+
+    public void setTwitterAccessTokenSecret(String twitterAccessTokenSecret) {
+        this.twitterAccessTokenSecret = twitterAccessTokenSecret;
+    }
+
+    public String getFlickrKey() {
+        return flickrKey;
+    }
+
+    public void setFlickrKey(String flickrKey) {
+        this.flickrKey = flickrKey;
+    }
+
+    public String getFlickrSecret() {
+        return flickrSecret;
+    }
+
+    public void setFlickrSecret(String flickrSecret) {
+        this.flickrSecret = flickrSecret;
+    }
+    
+    
+    
+            
 
 }

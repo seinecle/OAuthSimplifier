@@ -136,7 +136,7 @@ public class AuthentificationStart implements Serializable {
             if (local) {
                 callback = "http://localhost:8080/OAuthSimplifier/faces/success.xhtml?id=" + id;
             } else {
-                callback = "http://www.clementlevallois.net:8080/oauthsimplifier/faces/success.xhtml?id=" + id;
+                callback = "http://www.exploreyourdata.com:8090/OAuthSimplifier/faces/success.xhtml?id=" + id;
 
             }
 

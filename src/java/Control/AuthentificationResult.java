@@ -7,6 +7,7 @@ package Control;
 import Model.AccessTokenPlus;
 import Model.Record;
 import Model.Session;
+import Model.User;
 import Persistence.MongoMorphia;
 import com.github.jmkgreen.morphia.Datastore;
 import com.github.jmkgreen.morphia.Morphia;
@@ -73,7 +74,7 @@ import twitter4j.auth.RequestToken;
  */
 @ManagedBean
 @ViewScoped
-public class AuthentificationResult  implements Serializable{
+public class AuthentificationResult implements Serializable {
 
     Mongo m;
     Morphia morphia;
@@ -87,6 +88,7 @@ public class AuthentificationResult  implements Serializable{
 
     @ManagedProperty(value = "#{authentificationStart}")
     private AuthentificationStart authentificationStart;
+    private boolean serverErrorMessageRendered = false;
 
     public void setAuthentificationStart(AuthentificationStart authentificationStart) {
         this.authentificationStart = authentificationStart;
@@ -97,104 +99,119 @@ public class AuthentificationResult  implements Serializable{
 
     public static void main(String args[]) throws IOException {
         debug = true;
-        try {
-            new AuthentificationResult().init();
-        } catch (TwitterException ex) {
-            Logger.getLogger(AuthentificationResult.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        new AuthentificationResult().init();
     }
 
     @PostConstruct
-    public void init() throws TwitterException, IOException {
+    public void init() {
+        try {
+            Map<String, List<String>> urlParams = new HashMap();
 
-        Map<String, List<String>> urlParams = new HashMap();
-
-        if (!debug) {
-            try {
-                FacesContext ctx = FacesContext.getCurrentInstance();
-                HttpServletRequest servletRequest = (HttpServletRequest) ctx.getExternalContext().getRequest();
-                uri = servletRequest.getRequestURI();
-                if (servletRequest.getQueryString() != null) {
-                    uri = uri.concat("?").concat(servletRequest.getQueryString());
+            if (!debug) {
+                try {
+                    FacesContext ctx = FacesContext.getCurrentInstance();
+                    HttpServletRequest servletRequest = (HttpServletRequest) ctx.getExternalContext().getRequest();
+                    uri = servletRequest.getRequestURI();
+                    if (servletRequest.getQueryString() != null) {
+                        uri = uri.concat("?").concat(servletRequest.getQueryString());
+                    }
+                    urlParams = getUrlParameters(uri);
+                } catch (UnsupportedEncodingException ex) {
+                    Logger.getLogger(AuthentificationResult.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                urlParams = getUrlParameters(uri);
-            } catch (UnsupportedEncodingException ex) {
-                Logger.getLogger(AuthentificationResult.class.getName()).log(Level.SEVERE, null, ex);
+            } else {
+                urlParams = new HashMap();
+                List<String> values = new ArrayList();
+                values.add("this is an id");
+                values.add("token");
+                values.add("token verifier");
+                urlParams.put("id", values);
+                urlParams.put("oauth_token", values);
+                urlParams.put("oauth_verifier", values);
             }
-        } else {
-            urlParams = new HashMap();
-            List<String> values = new ArrayList();
-            values.add("this is an id");
-            values.add("token");
-            values.add("token verifier");
-            urlParams.put("id", values);
-            urlParams.put("oauth_token", values);
-            urlParams.put("oauth_verifier", values);
-        }
 
-        String id = "";
-        String oAuth_token = "";
-        String oAuth_verifier = "";
+            String id = "";
+            String oAuth_token = "";
+            String oAuth_verifier = "";
 
-        for (String key : urlParams.keySet()) {
-            if ("id".equals(key)) {
-                id = urlParams.get(key).get(0);
-            }
-            if ("oauth_token".equals(key)) {
-                if (debug) {
-                    oAuth_token = urlParams.get(key).get(1);
-                } else {
-                    oAuth_token = urlParams.get(key).get(0);
+            for (String key : urlParams.keySet()) {
+                if ("id".equals(key)) {
+                    id = urlParams.get(key).get(0);
+                }
+                if ("oauth_token".equals(key)) {
+                    if (debug) {
+                        oAuth_token = urlParams.get(key).get(1);
+                    } else {
+                        oAuth_token = urlParams.get(key).get(0);
+                    }
+                }
+                if ("oauth_verifier".equals(key)) {
+                    if (debug) {
+                        oAuth_verifier = urlParams.get(key).get(2);
+                    } else {
+                        oAuth_verifier = urlParams.get(key).get(0);
+                    }
                 }
             }
-            if ("oauth_verifier".equals(key)) {
-                if (debug) {
-                    oAuth_verifier = urlParams.get(key).get(2);
-                } else {
-                    oAuth_verifier = urlParams.get(key).get(0);
-                }
+
+            Record recordCurrentUser = null;
+
+            if (!id.isEmpty() & !oAuth_token.isEmpty() & !oAuth_verifier.isEmpty()) {
+                recordCurrentUser = authentificationStart.r;
+                twitter = authentificationStart.twitter;
             }
+
+            MongoMorphia mm = new MongoMorphia();
+            mm.initialize();
+
+            Datastore dsAccessToken = mm.getDsAccessToken();
+            Datastore dsSession = mm.getDsSessions();
+
+            requestToken = recordCurrentUser.getRequestToken();
+            accessToken = twitter.getOAuthAccessToken(requestToken, oAuth_verifier);
+            String currentUser = accessToken.getScreenName();
+            System.out.println("current user: " + currentUser);
+
+            Session session = new Session();
+            session.setIdGephi(id);
+            session.setUser(currentUser);
+            session.setTime(System.currentTimeMillis());
+
+            dsSession.save(session);
+
+            Datastore dsUser = mm.getDsUsers();
+            User user = dsUser.find(User.class).field("name").equal(currentUser).get();
+            if (user == null) {
+                user = new User();
+                user.setName(currentUser);
+                dsUser.save(user);
+            }
+
+            if (dsAccessToken.find(AccessTokenPlus.class).field("token").equal((accessToken.getToken())).asList().isEmpty()) {
+                AccessTokenPlus accessTokenPlus = new AccessTokenPlus(accessToken.getToken(), accessToken.getTokenSecret());
+                accessTokenPlus.setIsAvailable(true);
+                accessTokenPlus.setScreen_name(currentUser);
+                dsAccessToken.save(accessTokenPlus);
+            }
+
+            messageRendered = true;
+
+//            FacesContext.getCurrentInstance()
+//                    .getPartialViewContext().getRenderIds().add("messageOK");
+//            FacesContext.getCurrentInstance()
+//                    .getPartialViewContext().getRenderIds().add("messageFAIL");
+        } catch (TwitterException ex) {
+            if (ex.getStatusCode()>499){
+                serverErrorMessageRendered = true;
+//            FacesContext.getCurrentInstance()
+//                    .getPartialViewContext().getRenderIds().add("messageOK");
+//            FacesContext.getCurrentInstance()
+//                    .getPartialViewContext().getRenderIds().add("messageFAIL");
+                
+            }
+               
+
         }
-
-        Record recordCurrentUser = null;
-
-        if (!id.isEmpty() & !oAuth_token.isEmpty() & !oAuth_verifier.isEmpty()) {
-            recordCurrentUser = authentificationStart.r;
-            twitter = authentificationStart.twitter;
-        }
-
-        MongoMorphia mm = new MongoMorphia();
-        mm.initialize();
-
-        Datastore dsAccessToken = mm.getDsAccessToken();
-        Datastore dsSession = mm.getDsSessions();
-
-        requestToken = recordCurrentUser.getRequestToken();
-        accessToken = twitter.getOAuthAccessToken(requestToken, oAuth_verifier);
-        String currentUser = accessToken.getScreenName();
-        System.out.println("current user: " + currentUser);
-
-        Session session = new Session();
-        session.setIdGephi(id);
-        session.setUser(currentUser);
-        session.setTime(System.currentTimeMillis());
-
-        dsSession.save(session);
-
-        if (dsAccessToken.find(AccessTokenPlus.class).field("token").equal((accessToken.getToken())).asList().isEmpty()) {
-            AccessTokenPlus accessTokenPlus = new AccessTokenPlus(accessToken.getToken(), accessToken.getTokenSecret());
-            accessTokenPlus.setIsAvailable(true);
-            accessTokenPlus.setScreen_name(currentUser);
-            dsAccessToken.save(accessTokenPlus);
-        }
-
-
-        messageRendered = true;
-
-        FacesContext.getCurrentInstance()
-                .getPartialViewContext().getRenderIds().add("messageOK");
-        FacesContext.getCurrentInstance()
-                .getPartialViewContext().getRenderIds().add("messageFAIL");
 
     }
 
@@ -245,4 +262,14 @@ public class AuthentificationResult  implements Serializable{
     public void setUri(String uri) {
         this.uri = uri;
     }
+
+    public boolean isServerErrorMessageRendered() {
+        return serverErrorMessageRendered;
+    }
+
+    public void setServerErrorMessageRendered(boolean serverErrorMessageRendered) {
+        this.serverErrorMessageRendered = serverErrorMessageRendered;
+    }
+    
+    
 }
